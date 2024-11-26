@@ -2,47 +2,146 @@ using System.Data.SQLite;
 
 namespace HabitLoggerApp;
 
-// using var connection = new SQLiteConnection(connectionString);
-// connection.Open();
-// var command = connection.CreateCommand();
-// command.CommandText = @"CREATE TABLE IF NOT EXISTS habit (
-//     Id INTEGER PRIMARY KEY AUTOINCREMENT, 
-//     Date TEXT, 
-//     Quantity INTEGER)";
-// command.ExecuteNonQuery();
-//
-// connection.Close();
-
 public class HabitManager
 {
     private const string ConnectionString = "Data Source=habits.db";
 
-    public void CreateHabit()
+    public HabitManager()
     {
-        Console.WriteLine("Creating habit");
-        // using var connection = new SQLiteConnection(ConnectionString);
+        using var connection = new SQLiteConnection(ConnectionString);
+        connection.Open();
+
+        var command = connection.CreateCommand();
+        command.CommandText =
+            """
+            CREATE TABLE IF NOT EXISTS habit (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                Date TEXT,
+                Body TEXT,
+                Quantity INTEGER)
+            """;
+        command.ExecuteNonQuery();
+
+        connection.Close();
     }
 
-    public void EditHabit()
+    public void CreateHabit(string date, string body, int quantity)
     {
-        Console.WriteLine("Editing habit");
+        using var connection = new SQLiteConnection(ConnectionString);
+        connection.Open();
 
-        // using var connection = new SQLiteConnection(ConnectionString);
+        var insertQuery =
+            """
+            INSERT INTO habit (Date, Body, Quantity) 
+                VALUES (@date, @body, @quantity)
+            """;
+        var command = connection.CreateCommand();
+        command.CommandText = insertQuery;
+        command.Parameters.Add(new SQLiteParameter("@date", date));
+        command.Parameters.Add(new SQLiteParameter("@body", body));
+        command.Parameters.Add(new SQLiteParameter("@quantity", quantity));
+
+        try
+        {
+            command.ExecuteNonQuery();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
     }
 
-    public void DeleteHabit()
+    public bool UpdateHabit(int id, string body, string date, int quantity)
     {
-        Console.WriteLine("Deleting habit");
+        using var connection = new SQLiteConnection(ConnectionString);
+        connection.Open();
 
-        // using var connection = new SQLiteConnection(ConnectionString);
+        var updateQuery =
+            """
+            UPDATE habit
+            SET Body = @body, Date = @date, Quantity = @quantity
+            WHERE Id = @id
+            """;
+        
+        var command = connection.CreateCommand();
+        command.CommandText = updateQuery;
+        command.Parameters.Add(new SQLiteParameter("@id", id));
+        command.Parameters.Add(new SQLiteParameter("@body", body));
+        command.Parameters.Add(new SQLiteParameter("@date", date));
+        command.Parameters.Add(new SQLiteParameter("@quantity", quantity));
+
+        var updatedCount = 0;
+        try
+        {
+            updatedCount = command.ExecuteNonQuery();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+
+        return updatedCount > 0;
     }
 
-    public void GetAllHabits()
+    public bool DeleteHabit(int id)
     {
-        Console.WriteLine("Fetching all habits");
+        using var connection = new SQLiteConnection(ConnectionString);
+        connection.Open();
 
-        // using var connection = new SQLiteConnection(ConnectionString);
+        var deleteQuery =
+            """
+            DELETE FROM habit
+            WHERE Id = @Id;
+            """;
+
+        var command = connection.CreateCommand();
+        command.CommandText = deleteQuery;
+        command.Parameters.Add(new SQLiteParameter("@Id", id));
+
+        var rowCount = 0;
+        try
+        {
+            rowCount = command.ExecuteNonQuery();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+
+        return rowCount > 0;
+    }
+
+    public List<Habit> GetAllHabits()
+    {
+        var habits = new List<Habit>();
+        using var connection = new SQLiteConnection(ConnectionString);
+        connection.Open();
+
+        var command = connection.CreateCommand();
+        command.CommandText =
+            """
+            SELECT Id, Date, Body, Quantity FROM habit
+            """;
+
+        try
+        {
+            using var reader = command.ExecuteReader();
+            if (reader.HasRows)
+                while (reader.Read())
+                {
+                    var id = reader.GetInt32(0);
+                    var date = reader.GetString(1);
+                    var body = reader.GetString(2);
+                    var quantity = reader.GetInt32(3);
+
+                    habits.Add(new Habit(id, date, body, quantity));
+                }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+
+        return habits;
     }
 }
-
-public record struct Habit(int Id, string Date, int Quantity);

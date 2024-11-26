@@ -2,9 +2,7 @@ namespace HabitLoggerApp;
 
 public class UserInterface
 {
-    private readonly HabitManager _habitManager = new();
-
-    private string? GetUserInput(string message)
+    public string GetUserInput(string message)
     {
         string? userInput = null;
         while (string.IsNullOrEmpty(userInput))
@@ -16,7 +14,33 @@ public class UserInterface
         return userInput;
     }
 
-    private void DisplayMenu(bool clearConsole = false)
+    public int GetUserNumberInput(string message)
+    {
+        string? quantityInput;
+        int quantity;
+        do
+        {
+            Console.WriteLine(message);
+            quantityInput = Console.ReadLine();
+        } while (!int.TryParse(quantityInput, out quantity));
+
+        return quantity;
+    }
+
+    public string GetUserDateInput(string message)
+    {
+        string? dateInput;
+        DateTime parsedDate;
+        do
+        {
+            Console.WriteLine(message);
+            dateInput = Console.ReadLine();
+        } while (!DateTime.TryParse(dateInput, out parsedDate));
+
+        return parsedDate.ToString("d");
+    }
+
+    public void DisplayMenu(bool clearConsole = false)
     {
         if (clearConsole)
             Console.Clear();
@@ -31,34 +55,17 @@ public class UserInterface
         Console.WriteLine("5 - Exit");
     }
 
-    public void Run()
+    public void DisplayHabits(List<Habit> habits)
     {
-        var appIsRunning = true;
-        DisplayMenu(true);
+        Console.WriteLine("ID - BODY - QUANTITY - DATE");
+        Console.WriteLine("===============================");
+        if (habits.Count == 0)
+            Console.WriteLine("No habits found.");
+        else
+            foreach (var habit in habits)
+                Console.WriteLine(habit);
 
-        while (appIsRunning)
-        {
-            var input = GetUserInput("Enter something: ");
-            switch (input)
-            {
-                case "1":
-                    _habitManager.GetAllHabits();
-                    break;
-                case "2":
-                    _habitManager.CreateHabit();
-                    break;
-                case "3":
-                    _habitManager.EditHabit();
-                    break;
-                case "4":
-                    _habitManager.DeleteHabit();
-                    break;
-                default:
-                    appIsRunning = false;
-                    break;
-            }
-
-            DisplayMenu(false);
-        }
+        Console.WriteLine("\nPress any key to continue:");
+        Console.ReadKey();
     }
 }
