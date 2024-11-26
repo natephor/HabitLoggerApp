@@ -1,3 +1,4 @@
-﻿// See https://aka.ms/new-console-template for more information
+﻿using HabitLoggerApp;
 
-Console.WriteLine("Hello, World!");
+var ui = new UserInterface();
+ui.Run();
